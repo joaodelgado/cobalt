@@ -1,0 +1,11 @@
+[package]
+authors = [
+    "João Delgado <joaomtdelgado@gmail.com>",
+    "Tiago Marques <samarques.tiago@gmail.com"
+]
+edition = "2018"
+name = "backend"
+version = "0.1.0"
+
+[dependencies]
+serial = "0.4"
