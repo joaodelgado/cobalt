@@ -1,7 +1,6 @@
 use std::time::{Duration, Instant};
 
 use log::info;
-
 use prometheus::{Counter, Encoder, Opts, Registry, TextEncoder};
 
 use super::geiger;
@@ -19,7 +18,7 @@ impl Monitoring {
     pub fn new() -> Monitoring {
         // Create a Counter.
         let opts = Opts::new(
-            "raw_counts",
+            "geiger_raw_counts",
             "Counter with raw counts from the Geiger counter",
         );
         let c = Counter::with_opts(opts).unwrap();
@@ -40,8 +39,7 @@ impl Monitoring {
         self.local_counts.push(Instant::now());
     }
 
-    #[allow(unused)]
-    pub fn export(&self) -> String {
+    pub fn prometheus_export(&self) -> String {
         // Gather the metrics.
         let mut buffer = vec![];
         let encoder = TextEncoder::new();

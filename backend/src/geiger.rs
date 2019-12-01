@@ -4,13 +4,12 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use log::debug;
-
 use serial::prelude::*;
 use serial::SystemPort;
 
 use super::metrics::Monitoring;
 
-const CONVERTION_FACTOR: f64 = 0.00812037037037;
+const CONVERTION_FACTOR: f64 = 0.008_120_370_370_37;
 
 pub struct Geiger {
     monitoring: Arc<Mutex<Monitoring>>,
@@ -41,7 +40,7 @@ impl Geiger {
         let mut reader = io::BufReader::new(&mut self.port);
         loop {
             let mut line = String::new();
-            if let Ok(_) = reader.read_line(&mut line) {
+            if reader.read_line(&mut line).is_ok() {
                 {
                     self.monitoring.lock().unwrap().register_count();
                 }
