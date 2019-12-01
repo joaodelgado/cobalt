@@ -5,9 +5,14 @@ use std::time::{Duration, Instant};
 
 use serial::prelude::*;
 
+use env_logger::Env;
+use log::{debug, info};
+
 const CONVERTION_FACTOR: f64 = 0.00812037037037;
 
 fn main() -> io::Result<()> {
+    env_logger::from_env(Env::default().default_filter_or("info")).init();
+
     for arg in env::args_os().skip(1) {
         let mut port = serial::open(&arg)?;
         configure(&mut port)?;
@@ -39,10 +44,11 @@ fn interact<T: SerialPort>(port: &mut T) -> io::Result<()> {
     loop {
         let mut line = String::new();
         if let Ok(_) = reader.read_line(&mut line) {
+            debug!("Received count");
             counter += 1;
             if now.elapsed() > minute {
-                println!(
-                    "{} CPM\t{} μSv/h",
+                info!(
+                    "{} CPM\t{:.4} μSv/h",
                     counter,
                     f64::from(counter) * CONVERTION_FACTOR
                 );
