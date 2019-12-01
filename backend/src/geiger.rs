@@ -1,8 +1,9 @@
 use std::io;
 use std::io::BufRead;
-use std::time::{Duration, Instant};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
-use log::{debug, info};
+use log::debug;
 
 use serial::prelude::*;
 use serial::SystemPort;
@@ -11,13 +12,13 @@ use super::metrics::Monitoring;
 
 const CONVERTION_FACTOR: f64 = 0.00812037037037;
 
-pub struct Geiger<'a> {
-    monitoring: &'a Monitoring,
+pub struct Geiger {
+    monitoring: Arc<Mutex<Monitoring>>,
     port: SystemPort,
 }
 
-impl<'a> Geiger<'a> {
-    pub fn new(monitoring: &'a Monitoring, serial_port: &str) -> io::Result<Geiger<'a>> {
+impl Geiger {
+    pub fn new(monitoring: Arc<Mutex<Monitoring>>, serial_port: &str) -> io::Result<Geiger> {
         let mut port = serial::open(&serial_port)?;
         Geiger::configure(&mut port)?;
         Ok(Geiger { monitoring, port })
@@ -38,31 +39,13 @@ impl<'a> Geiger<'a> {
 
     pub fn run(&mut self) -> io::Result<()> {
         let mut reader = io::BufReader::new(&mut self.port);
-        let mut counter = 0;
-        let mut metrics_timer = Instant::now();
-        let mut now = Instant::now();
-        let minute = Duration::from_secs(60);
-        let ten_seconds = Duration::from_secs(10);
-
         loop {
             let mut line = String::new();
             if let Ok(_) = reader.read_line(&mut line) {
-                self.monitoring.register_count();
+                {
+                    self.monitoring.lock().unwrap().register_count();
+                }
                 debug!("Received count");
-                counter += 1;
-                if metrics_timer.elapsed() > ten_seconds {
-                    println!("{}", self.monitoring.report());
-                    metrics_timer = Instant::now();
-                }
-                if now.elapsed() > minute {
-                    info!(
-                        "{} CPM\t{:.4} μSv/h",
-                        counter,
-                        Geiger::cpm_to_microsieverts(counter),
-                    );
-                    counter = 0;
-                    now = Instant::now();
-                }
             }
         }
     }
